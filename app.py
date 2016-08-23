@@ -71,6 +71,20 @@ class Root(object):
         return """<html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+      textarea {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        font-size: 1.2em;
+        width: 100%%;
+      }
+      #message {
+        width: 100%%;
+        font-size: 1.2em;
+        line-height: 3em;
+      }
+      </style>
       <script   src="https://code.jquery.com/jquery-1.12.4.min.js"   integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="   crossorigin="anonymous"></script>
       <script type='application/javascript'>
         $(document).ready(function() {
@@ -118,7 +132,7 @@ class Root(object):
     <form action='#' id='chatform' method='get'>
       <textarea id='chat' cols='35' rows='10'></textarea>
       <br />
-      <label for='message'>%(username)s: </label><input type='text' id='message' />
+      <input type='text' id='message' />
       <input id='send' type='submit' value='Send' />
       </form>
     </body>
