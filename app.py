@@ -61,9 +61,11 @@ class ChatWebSocketHandler(WebSocket):
         cherrypy.engine.publish('websocket-broadcast', TextMessage(reason))
 
 class Root(object):
-    def __init__(self, host, port, ssl=False):
+    def __init__(self, host, port, ssl=False, ssl_port=9443):
         self.host = host
         self.port = port
+        self.ssl_port = ssl_port
+        self.ssl = ssl
         self.scheme = 'wss' if ssl else 'ws'
 
     @cherrypy.expose
@@ -138,7 +140,7 @@ class Root(object):
     </body>
     </html>
     """ % {'username': "User%d" % random.randint(0, 100), 'host': self.host,
-           'port': self.port, 'scheme': self.scheme}
+           'port': self.ssl_port if self.ssl else self.port, 'scheme': self.scheme}
 
     @cherrypy.expose
     def ws(self, username):
@@ -154,33 +156,41 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Echo CherryPy Server')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('-p', '--port', default=9000, type=int)
+    parser.add_argument('--ssl-port', default=9443, type=int)
     parser.add_argument('--ssl', action='store_true')
     parser.add_argument('--cert', default='./server.crt', type=str)
     parser.add_argument('--key', default='./server.key', type=str)
     parser.add_argument('--chain', default='./server.chain', type=str)
     args = parser.parse_args()
 
-    cherrypy.config.update({'server.socket_host': args.host,
-                            'server.socket_port': args.port,
-                            'tools.staticdir.root': os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))})
-
-    if args.ssl:
-        cherrypy.config.update({'server.ssl_certificate': args.cert,
-                                'server.ssl_private_key': args.key,
-                                'server.ssl_certificate_chain': args.chain})
-
-    ChatPlugin(cherrypy.engine).subscribe()
-    cherrypy.tools.websocket = WebSocketTool()
-
-    cherrypy.quickstart(Root(args.host, args.port, args.ssl), '', config={
+    cherrypy.config.update({
+        'server.socket_host': args.host,
+        'server.socket_port': args.port,
+        'tools.staticdir.root': os.path.abspath(os.path.join(os.path.dirname(__file__), 'static')),
+    })
+    config = {
         '/ws': {
             'tools.websocket.on': True,
             'tools.websocket.handler_cls': ChatWebSocketHandler,
             'tools.websocket.protocols': ['toto', 'mytest', 'hithere']
-            },
+        },
         '/static': {
               'tools.staticdir.on': True,
               'tools.staticdir.dir': ''
-            },
         },
-    )
+    }
+
+    if args.ssl:
+        ssl_server = cherrypy._cpserver.Server()
+        ssl_server.socket_host = args.host
+        ssl_server.ssl_certificate = args.cert
+        ssl_server.ssl_private_key = args.key
+        ssl_server.socket_port = args.ssl_port
+        ssl_server.ssl_certificate_chain = args.chain
+        ssl_server.subscribe()
+
+    ChatPlugin(cherrypy.engine).subscribe()
+    cherrypy.tools.websocket = WebSocketTool()
+
+    app_root = Root(args.host, args.port, args.ssl, ssl_port=args.ssl_port)
+    cherrypy.quickstart(app_root, '', config=config)
