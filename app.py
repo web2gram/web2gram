@@ -78,6 +78,29 @@ class Root(object):
 
     @cherrypy.expose
     def index(self):
+        return """<html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+      #username {
+        width: 100%;
+        font-size: 1.2em;
+        line-height: 3em;
+      }
+      </style>
+    </head>
+    <body>
+    <form action='/chatroom' id='chatform' method='get'>
+      <input type='text' name='username' id='username' /><br />
+      <input id='send' type='submit' value='Set Nickname' />
+      </form>
+    </body>
+    </html>
+    """
+
+    @cherrypy.expose
+    def chatroom(self, username=None):
+        username = username or "User%d" % random.randint(0, 100)
         messages = []
         with sqlite3.connect(DB_STRING) as dbc:
             result = dbc.execute("SELECT * FROM messages LIMIT 1000")
@@ -153,7 +176,7 @@ class Root(object):
       </form>
     </body>
     </html>
-    """ % {'username': "User%d" % random.randint(0, 100), 'host': self.host,
+    """ % {'username': username, 'host': self.host,
            'port': self.ssl_port if self.ssl else self.port, 'scheme': self.scheme,
            'messages': "\n".join(messages) + "\n"}
 
