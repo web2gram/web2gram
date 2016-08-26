@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import time
+import sqlite3
 import argparse
 import random
 import os
@@ -10,6 +12,8 @@ from ws4py.websocket import WebSocket
 from ws4py.messaging import TextMessage
 
 USERS = ['mike', 'stella', 'john']
+
+DB_STRING = 'data.db'
 
 class ChatPlugin(WebSocketPlugin):
     def __init__(self, bus):
@@ -46,6 +50,10 @@ class ChatWebSocketHandler(WebSocket):
         if text.find("@") == -1:
             # echo to all
             cherrypy.engine.publish('websocket-broadcast', m)
+            timestamp = int(time.time())
+            with sqlite3.connect(DB_STRING) as dbc:
+                dbc.execute("INSERT INTO messages (username, message, created) VALUES (?, ?, ?)",
+                            [self.username, text, timestamp])
         else:
             # or echo to a single user
             left, message = text.rsplit(':', 1)
@@ -70,6 +78,12 @@ class Root(object):
 
     @cherrypy.expose
     def index(self):
+        messages = []
+        with sqlite3.connect(DB_STRING) as dbc:
+            result = dbc.execute("SELECT * FROM messages LIMIT 1000")
+            for row in result:
+                messages.append(row[1])
+
         return """<html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -132,7 +146,7 @@ class Root(object):
     </head>
     <body>
     <form action='#' id='chatform' method='get'>
-      <textarea id='chat' cols='35' rows='10'></textarea>
+      <textarea id='chat' cols='35' rows='10'>%(messages)s</textarea>
       <br />
       <input type='text' id='message' />
       <input id='send' type='submit' value='Send' />
@@ -140,7 +154,8 @@ class Root(object):
     </body>
     </html>
     """ % {'username': "User%d" % random.randint(0, 100), 'host': self.host,
-           'port': self.ssl_port if self.ssl else self.port, 'scheme': self.scheme}
+           'port': self.ssl_port if self.ssl else self.port, 'scheme': self.scheme,
+           'messages': "\n".join(messages) + "\n"}
 
     @cherrypy.expose
     def ws(self, username):
