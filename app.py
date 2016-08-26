@@ -117,6 +117,8 @@ class Root(object):
         box-sizing: border-box;
         font-size: 1.2em;
         width: 100%%;
+        max-height: 500em;
+        overflow: auto;
       }
       #message {
         width: 100%%;
@@ -150,6 +152,8 @@ class Root(object):
           };
           ws.onmessage = function (evt) {
              $('#chat').val($('#chat').val() + evt.data + '\\n');
+             var textarea = document.getElementById('chat');
+             textarea.scrollTop = textarea.scrollHeight;
           };
           ws.onopen = function() {
              ws.send("%(username)s entered the room");
@@ -164,6 +168,8 @@ class Root(object):
              $('#message').val("");
              return false;
           });
+          var textarea = document.getElementById('chat');
+          textarea.scrollTop = textarea.scrollHeight;
         });
       </script>
     </head>
