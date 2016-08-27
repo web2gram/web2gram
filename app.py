@@ -162,7 +162,7 @@ class Root(object):
              ws.send("%(username)s entered the room");
           };
           ws.onclose = function(evt) {
-             $('#chat').val($('#chat').val() + 'Connection closed by server: ' + evt.code + ' \"' + evt.reason + '\"\\n');
+             $('#chat').val($('#chat').val() + 'Connection closed by server: ' + evt.code + ' \"' + evt.reason + '\". Refresh to reconnect.\\n');
           };
 
           $('#send').click(function() {
