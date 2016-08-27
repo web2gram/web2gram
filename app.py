@@ -81,6 +81,7 @@ class Root(object):
         return """<html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
       <style>
       #username {
         width: 100%;
@@ -92,8 +93,8 @@ class Root(object):
     <body>
     <h1>PyconMY 2016 Engage</h1>
     <form action='/chatroom' id='chatform' method='get'>
-      <input type='text' name='username' id='username' /><br />
-      <input id='send' type='submit' value='Set Nickname' />
+      <input type='text' name='username' id='username' class='form-control'/><br />
+      <input id='send' type='submit' value='Set Nickname' class='form-control btn btn-primary'/>
       </form>
     </body>
     </html>
@@ -111,6 +112,7 @@ class Root(object):
         return """<html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
       <style>
       textarea {
         -webkit-box-sizing: border-box;
@@ -179,8 +181,8 @@ class Root(object):
     <form action='#' id='chatform' method='get'>
       <textarea id='chat' cols='35' rows='10'>%(messages)s</textarea>
       <br />
-      <input type='text' id='message' />
-      <input id='send' type='submit' value='Send' />
+      <input type='text' id='message' placeholder='Type your message here. Be nice.' />
+      <input id='send' type='submit' value='Send' class='form-control btn btn-primary'/>
       </form>
     </body>
     </html>
