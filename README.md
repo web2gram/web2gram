@@ -3,7 +3,7 @@ Web to Telegram chat with CherryPy based on https://gist.github.com/Lawouach/769
 ## Quickstart
 Clone this source code:-
 
-    git clone
+    git clone git@github.com:web2gram/web2gram.git
 
 Run buildout:-
 
