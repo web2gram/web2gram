@@ -33,3 +33,5 @@ To check our current webhook settings:-
 Will show output like:-
 
     {'url': u'https://your-domain:9000/webhook/', 'has_custom_certificate': False, 'pending_update_count': 0, 'last_error_date': '', 'last_error_message': ''}
+
+[tgcli]: https://github.com/web2gram/tgcli
