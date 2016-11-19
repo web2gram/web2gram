@@ -11,6 +11,10 @@ from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
 from ws4py.messaging import TextMessage
 
+from telegram import Bot, Update
+from telegram.ext import Updater
+
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 USERS = ['mike', 'stella', 'john']
 
 DB_STRING = 'data.db'
@@ -46,23 +50,9 @@ class ChatWebSocketHandler(WebSocket):
         cherrypy.engine.publish('add-client', self.username, self)
 
     def received_message(self, m):
-        text = m.data.decode('utf8')
-        if text.find("@") == -1:
-            # echo to all
-            cherrypy.engine.publish('websocket-broadcast', m)
-            timestamp = int(time.time())
-            with sqlite3.connect(DB_STRING) as dbc:
-                dbc.execute("INSERT INTO messages (username, message, created) VALUES (?, ?, ?)",
-                            [self.username, text, timestamp])
-        else:
-            # or echo to a single user
-            left, message = text.rsplit(':', 1)
-            print(left)
-            from_username, to_username = left.split('@')
-            print(repr(from_username), repr(to_username), repr(self.username))
-            client = cherrypy.engine.publish('get-client', to_username.strip()).pop()
-            print(client)
-            client.send("@@%s: %s" % (from_username.strip()[:-1], message.strip()))
+        updater = Updater(cherrypy.config['app.tgtoken'])
+        updater.bot.sendMessage(cherrypy.config['app.tgchat'], text=str(m))
+        updater.stop()
 
     def closed(self, code, reason="A client left the room without a proper explanation."):
         cherrypy.engine.publish('del-client', self.username)
@@ -91,7 +81,7 @@ class Root(object):
       </style>
     </head>
     <body>
-    <h1>PyconMY 2016 Engage</h1>
+    <h1>Web2Gram Engage</h1>
     <form action='/chatroom' id='chatform' method='get'>
       <input type='text' name='username' id='username' class='form-control'/><br />
       <input id='send' type='submit' value='Set Nickname' class='form-control btn btn-primary'/>
@@ -103,11 +93,7 @@ class Root(object):
     @cherrypy.expose
     def chatroom(self, username=None):
         username = username or "User%d" % random.randint(0, 100)
-        messages = []
-        with sqlite3.connect(DB_STRING) as dbc:
-            result = dbc.execute("SELECT * FROM messages LIMIT 1000")
-            for row in result:
-                messages.append(row[1])
+        messages = ["Welcome ..."]
 
         return """<html>
     <head>
@@ -177,7 +163,7 @@ class Root(object):
       </script>
     </head>
     <body>
-    <h1>PyconMY 2016 Engage</h1>
+    <h1>Web2Gram Engage</h1>
     <form action='#' id='chatform' method='get'>
       <textarea id='chat' cols='35' rows='10'>%(messages)s</textarea>
       <br />
@@ -196,12 +182,28 @@ class Root(object):
         cherrypy.request.ws_handler.username = username
         cherrypy.log("Handler created: %s" % repr(cherrypy.request.ws_handler))
 
+    @cherrypy.tools.json_in()
+    @cherrypy.expose
+    def webhook(self):
+        print cherrypy.request.json
+        bot = Bot(cherrypy.config['app.tgtoken'])
+        update = Update.de_json(cherrypy.request.json, bot)
+        username, message = update.message.text.split(':')
+        client = cherrypy.engine.publish('get-client', username).pop()
+        if username:
+            cherrypy.log("Sent to:%s" % username)
+            client.send("Operator: %s" % message)
+
 if __name__ == '__main__':
     import logging
+    import cherrypy_jinja2
     from ws4py import configure_logger
     configure_logger(level=logging.DEBUG)
 
-    parser = argparse.ArgumentParser(description='Echo CherryPy Server')
+    cj = cherrypy_jinja2.CherrypyJinja(os.path.join(PROJECT_ROOT, 'templates'))
+    cj.setup()
+
+    parser = argparse.ArgumentParser(description='Web2Gram')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('-p', '--port', default=9000, type=int)
     parser.add_argument('--ssl-port', default=9443, type=int)
@@ -209,12 +211,16 @@ if __name__ == '__main__':
     parser.add_argument('--cert', default='./server.crt', type=str)
     parser.add_argument('--key', default='./server.key', type=str)
     parser.add_argument('--chain', default='./server.chain', type=str)
+    parser.add_argument('--tgtoken', type=str)
+    parser.add_argument('--tgchat', type=str)
     args = parser.parse_args()
 
     cherrypy.config.update({
         'server.socket_host': args.host,
         'server.socket_port': args.port,
         'tools.staticdir.root': os.path.abspath(os.path.join(os.path.dirname(__file__), 'static')),
+        'app.tgtoken': args.tgtoken,
+        'app.tgchat': args.tgchat,
     })
     config = {
         '/ws': {
