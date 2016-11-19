@@ -21,3 +21,15 @@ In order for us to receive reply from Telegram, need to setup webhook for `TELEG
     https://your-domain:9000/webhook/
 
 Hint: For development and local testing, you may use ngrok or localtunnel.
+
+Here, we'll use [tgcli] to set the webhook:-
+
+    ./bin/tgcli <TELEGRAM_BOT_TOKEN> --webhook=https://your-domain:9000/webhook/
+
+To check our current webhook settings:-
+
+    ./bin/tgcli <TELEGRAM_BOT_TOKEN> --webhook=info
+
+Will show output like:-
+
+    {'url': u'https://your-domain:9000/webhook/', 'has_custom_certificate': False, 'pending_update_count': 0, 'last_error_date': '', 'last_error_message': ''}
